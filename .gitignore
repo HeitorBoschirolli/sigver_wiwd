@@ -4,3 +4,4 @@ models
 features/
 data/checks/*.jpg
 data/utsig/
+.vscode/
