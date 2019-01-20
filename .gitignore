@@ -2,3 +2,5 @@
 .ipynb_checkpoints
 models
 features/
+data/checks/*.jpg
+data/utsig/
