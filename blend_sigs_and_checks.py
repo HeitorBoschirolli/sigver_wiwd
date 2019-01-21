@@ -19,8 +19,8 @@ def create_file_structure(save_path, num_authors):
     create_dir(os.path.join(save_path, 'forgery'))
     create_dir(os.path.join(save_path, 'genuine'))
     for i in range(1, num_authors):
-        create_dir(os.path.join(save_path, 'forgery', str(i)))
-        create_dir(os.path.join(save_path, 'genuine', str(i)))
+        create_dir(os.path.join(save_path, 'forgery', str(i).zfill(3)))
+        create_dir(os.path.join(save_path, 'genuine', str(i).zfill(3)))
 
 
 def load_signatures(load_path, sort=True):
@@ -38,14 +38,14 @@ def load_signatures(load_path, sort=True):
     return forgeries_authors_list, genuine_authors_list
 
 
-def equals_size(img1, img2, center):
-    img2 = crop(
-        img2,
-        ((center[0] - img1.shape[0]/2, img2.shape[0] - center[0] - img1.shape[0]/2), 
-        (center[1] - img1.shape[1]/2, img2.shape[1] - center[1] - img1.shape[1]/2))
+def equals_size(reference, img, center):
+    img = crop(
+        img,
+        ((center[0] - reference.shape[0]/2, img.shape[0] - center[0] - reference.shape[0]/2), 
+        (center[1] - reference.shape[1]/2, img.shape[1] - center[1] - reference.shape[1]/2))
     )
 
-    return img2
+    return img
 
 
 def binarizes(img, max_val=1):
@@ -80,19 +80,63 @@ def blend(foreground, background, method='multiply'):
                 blended[row][col] = background[row][col] * foreground[row][col] / 255
 
 
-def blend_all(sigs, checks):
-    shuffle(checks)
+def blend_all(sigs, checks, checks_centers):
+    
+    checks_and_centers = list(zip(checks, checks_centers))
+    shuffle(checks_and_centers)
 
     for index, sig in enumerate(sigs):
-        blend(sig, checks[index])
+        sigs[index] = blend(
+            equals_size(
+                sig,
+                checks_and_centers[index][0],
+                checks_and_centers[index][1]
+            ),
+            checks[index]
+        )
 
+    return sigs
+
+
+def load_directory(path, format=None):
+    
+    if format != None and format.lower() not in ['png', 'jpeg', 'jpg']:
+        raise Exception('invalid image format')
+
+    imgs = list()
+    
+    if format == None:
+        for img_name in os.listdir(path):
+            imgs.append(io.imread(os.path.join(path, img_name)))
+    else:
+        for img_name in os.listdir(path):
+            if img_name[-len(format):].lower() == format.lower():
+                imgs.append(io.imread(os.path.join(path, img_name)))
+
+    return imgs
 
 
 if __name__ == '__main__':
-    load_sigs = 'data/utsig'
+    load_sigs = 'data/utsig' 
     load_checks = 'data/checks'
     save_sigs = 'data/background_utsig'
 
+    c_col = [1800, 2602, 2067, 2713, 2077, 2638, 2287, 2195, 2071, 2164, 2890, 2264, 2300, 2055, 2785, 2586, 1286, 1285, 2472, 699]
+    c_row = [1215, 659, 979, 1269, 834, 1087, 965, 767, 805, 836, 1189, 1140, 783, 1807, 1479, 452, 393, 376, 1877, 683]
+    centers = list(zip(c_row, c_col))
+
     create_file_structure(save_sigs, 116)
     forgeries, genuine = load_signatures(load_sigs)
-    
+
+    checks = load_directory(load_checks, 'jpg')
+    for author in forgeries:
+        author_sigs_path = os.path.join(
+            load_sigs,
+            'forgery',
+            author
+        )
+        sigs = load_directory(author_sigs_path, 'png')
+        sigs = blend_all(sigs, checks, centers)
+        
+        for index, sig in enumerate(sigs):
+            io.imsave(os.path.join(save_sigs, author, index + '.png'))
