@@ -49,18 +49,6 @@ def equals_size(reference, img, center):
     return img
 
 
-def binarizes(img, max_val=1):
-
-    if max_val != 1 and max_val != 255:
-        raise Exception('Max value should be 1 or 255')
-
-    threshold = filters.threshold_otsu(img, nbins=256)
-    img[img <= threshold] = 0
-    img[img > threshold] = max_val
-
-    return img
-
-
 def blend(foreground, background, method='multiply'):
     
     if foreground.shape != background.shape:
@@ -69,13 +57,11 @@ def blend(foreground, background, method='multiply'):
     if method != 'multiply':
         raise Exception('unknown blending method')
 
-    binary_foreground = binarizes(foreground)
-
     blended = np.empty(background.shape, dtype='int32')
 
     for row in range(blended.shape[0]):
         for col in range(blended.shape[1]):
-            if binary_foreground[row][col] == 0:
+            if foreground[row][col] == 0:
                 blended[row][col] = background[row][col]
             else:
                 blended[row][col] = background[row][col] * foreground[row][col] / 255
@@ -128,7 +114,7 @@ def rgb2gray_list(imgs_list):
 
 def preprocess_imgs_list(imgs_list, canvas_size):
 
-    imgs_list = [preprocess_signature(img, canvas_size) for img in imgs_list]
+    imgs_list = [preprocess_signature(img, canvas_size, input_size=(300, 480), img_size=(320, 502)) for img in imgs_list]
 
     return imgs_list
 
