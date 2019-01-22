@@ -49,18 +49,6 @@ def equals_size(reference, img, center):
     return img
 
 
-def binarizes(img, max_val=1):
-
-    if max_val != 1 and max_val != 255:
-        raise Exception('Max value should be 1 or 255')
-
-    threshold = filters.threshold_otsu(img, nbins=256)
-    img[img <= threshold] = 0
-    img[img > threshold] = max_val
-
-    return img
-
-
 def blend(foreground, background, method='multiply'):
     
     if foreground.shape != background.shape:
