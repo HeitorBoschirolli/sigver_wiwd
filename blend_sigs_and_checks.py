@@ -6,6 +6,7 @@ from skimage import transform
 from skimage import filters
 from skimage.util import crop
 from random import shuffle
+from preprocess.normalize import preprocess_signature
 
 
 def create_dir (save_path):
@@ -104,6 +105,8 @@ def load_directory(path, format=None):
         raise Exception('invalid image format')
 
     imgs = list()
+    files = os.listdir(path)
+    files.sort()
     
     if format == None:
         for img_name in os.listdir(path):
@@ -116,11 +119,26 @@ def load_directory(path, format=None):
     return imgs
 
 
+def rgb2gray_list(imgs_list):
+
+    imgs_list = [color.rgb2gray(img) for img in imgs_list]
+
+    return imgs_list
+
+
+def preprocess_imgs_list(imgs_list, canvas_size):
+
+    imgs_list = [preprocess_signature(img, canvas_size) for img in imgs_list]
+
+    return imgs_list
+
+
 if __name__ == '__main__':
     load_sigs = 'data/utsig' 
     load_checks = 'data/checks'
     save_sigs = 'data/background_utsig'
 
+    canvas_size = (1627, 2387)
     c_col = [1800, 2602, 2067, 2713, 2077, 2638, 2287, 2195, 2071, 2164, 2890, 2264, 2300, 2055, 2785, 2586, 1286, 1285, 2472, 699]
     c_row = [1215, 659, 979, 1269, 834, 1087, 965, 767, 805, 836, 1189, 1140, 783, 1807, 1479, 452, 393, 376, 1877, 683]
     centers = list(zip(c_row, c_col))
@@ -128,7 +146,7 @@ if __name__ == '__main__':
     create_file_structure(save_sigs, 116)
     forgeries, genuine = load_signatures(load_sigs)
 
-    checks = load_directory(load_checks, 'jpg')
+    checks = rgb2gray_list(load_directory(load_checks, 'jpg'))
     for author in forgeries:
         author_sigs_path = os.path.join(
             load_sigs,
@@ -136,6 +154,7 @@ if __name__ == '__main__':
             author
         )
         sigs = load_directory(author_sigs_path, 'png')
+        sigs = preprocess_imgs_list(sigs, canvas_size)
         sigs = blend_all(sigs, checks, centers)
         
         for index, sig in enumerate(sigs):
