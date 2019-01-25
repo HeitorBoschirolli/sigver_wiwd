@@ -4,10 +4,13 @@ from scipy import ndimage
 from scipy.misc import imresize
 
 
-def preprocess_signature(img, canvas_size, img_size=(170, 242), input_size=(150, 220)):
+def preprocess_signature(img, canvas_size, img_size=(170, 242), input_size=(150, 220), invert=True):
     img = img.astype(np.uint8)
     centered = normalize_image(img, canvas_size)
-    inverted = 255 - centered
+    if invert:
+        inverted = 255 - centered
+    else:
+        inverted = centered
     resized = resize_image(inverted, img_size)
     cropped = crop_center(resized, input_size)
     return cropped
