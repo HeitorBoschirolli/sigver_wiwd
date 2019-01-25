@@ -7,6 +7,7 @@ from skimage import filters
 from skimage.util import crop
 from random import shuffle
 from preprocess.normalize import preprocess_signature
+import matplotlib.pyplot as plt
 
 
 def create_dir (save_path):
@@ -66,6 +67,8 @@ def blend(foreground, background, method='multiply'):
             else:
                 blended[row][col] = background[row][col] * foreground[row][col] / 255
 
+    return blended
+
 
 def blend_all(sigs, checks, checks_centers):
     
@@ -73,14 +76,15 @@ def blend_all(sigs, checks, checks_centers):
     shuffle(checks_and_centers)
 
     for index, sig in enumerate(sigs):
-        sigs[index] = blend(
+        pru = blend(
+            sig,
             equals_size(
                 sig,
                 checks_and_centers[index][0],
                 checks_and_centers[index][1]
-            ),
-            checks[index]
+            )
         )
+        pass
 
     return sigs
 
@@ -95,10 +99,10 @@ def load_directory(path, format=None):
     files.sort()
     
     if format == None:
-        for img_name in os.listdir(path):
+        for img_name in files:
             imgs.append(io.imread(os.path.join(path, img_name)))
     else:
-        for img_name in os.listdir(path):
+        for img_name in files:
             if img_name[-len(format):].lower() == format.lower():
                 imgs.append(io.imread(os.path.join(path, img_name)))
 
@@ -114,7 +118,7 @@ def rgb2gray_list(imgs_list):
 
 def preprocess_imgs_list(imgs_list, canvas_size):
 
-    imgs_list = [preprocess_signature(img, canvas_size, input_size=(300, 480), img_size=(320, 502)) for img in imgs_list]
+    imgs_list = [preprocess_signature(img, canvas_size, input_size=(300, 480), img_size=(320, 502), invert=False) for img in imgs_list]
 
     return imgs_list
 
