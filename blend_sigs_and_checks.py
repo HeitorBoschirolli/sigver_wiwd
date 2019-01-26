@@ -4,6 +4,7 @@ from skimage import io
 from skimage import color
 from skimage import transform
 from skimage import filters
+from skimage import exposure
 from skimage.util import crop
 from random import shuffle
 from preprocess.normalize import preprocess_signature
@@ -76,15 +77,14 @@ def blend_all(sigs, checks, checks_centers):
     shuffle(checks_and_centers)
 
     for index, sig in enumerate(sigs):
-        pru = blend(
+        sigs[index] = blend(
             sig,
             equals_size(
                 sig,
-                checks_and_centers[index][0],
-                checks_and_centers[index][1]
+                checks_and_centers[index % 20][0],
+                checks_and_centers[index % 20][1]
             )
         )
-        pass
 
     return sigs
 
@@ -118,11 +118,14 @@ def rgb2gray_list(imgs_list):
 
 def preprocess_imgs_list(imgs_list, canvas_size):
 
-<<<<<<< HEAD
     imgs_list = [preprocess_signature(img, canvas_size, input_size=(300, 480), img_size=(320, 502), invert=False) for img in imgs_list]
-=======
-    imgs_list = [preprocess_signature(img, canvas_size, input_size=(300, 480), img_size=(320, 502)) for img in imgs_list]
->>>>>>> 965a07d49ecad97cc71e03f9e963c311f19b184e
+
+    return imgs_list
+
+
+def rescale_intensity_imgs_list(imgs_list, in_range='image', out_range='dtype'):
+
+    imgs_list = [exposure.rescale_intensity(img, in_range, out_range) for img in imgs_list]
 
     return imgs_list
 
@@ -140,7 +143,11 @@ if __name__ == '__main__':
     create_file_structure(save_sigs, 116)
     forgeries, genuine = load_signatures(load_sigs)
 
-    checks = rgb2gray_list(load_directory(load_checks, 'jpg'))
+    checks = rescale_intensity_imgs_list(
+        rgb2gray_list(load_directory(load_checks, 'jpg')),
+        in_range=(0, 1),
+        out_range=(0, 255)
+    )
     for author in forgeries:
         author_sigs_path = os.path.join(
             load_sigs,
@@ -152,4 +159,23 @@ if __name__ == '__main__':
         sigs = blend_all(sigs, checks, centers)
         
         for index, sig in enumerate(sigs):
-            io.imsave(os.path.join(save_sigs, author, index + '.png'))
+            io.imsave(
+                os.path.join(save_sigs, 'forgery', author, str(index) + '.png'),
+                sig
+            )
+
+    for author in genuine:
+        author_sigs_path = os.path.join(
+            load_sigs,
+            'genuine',
+            author
+        )
+        sigs = load_directory(author_sigs_path, 'png')
+        sigs = preprocess_imgs_list(sigs, canvas_size)
+        sigs = blend_all(sigs, checks, centers)
+        
+        for index, sig in enumerate(sigs):
+            io.imsave(
+                os.path.join(save_sigs, 'genuine', author, str(index) + '.png'),
+                sig
+            )
