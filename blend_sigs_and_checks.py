@@ -118,7 +118,11 @@ def rgb2gray_list(imgs_list):
 
 def preprocess_imgs_list(imgs_list, canvas_size):
 
+<<<<<<< HEAD
     imgs_list = [preprocess_signature(img, canvas_size, input_size=(300, 480), img_size=(320, 502), invert=False) for img in imgs_list]
+=======
+    imgs_list = [preprocess_signature(img, canvas_size, input_size=(300, 480), img_size=(320, 502)) for img in imgs_list]
+>>>>>>> 965a07d49ecad97cc71e03f9e963c311f19b184e
 
     return imgs_list
 
